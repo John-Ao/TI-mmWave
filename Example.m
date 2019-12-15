@@ -1,14 +1,17 @@
-clear,clc
+% clear,clc
 %% 可更改参数
 cfgFileName = 'Profile.cfg';
 comportStandardNum = 3;%USB端口号
 comportEnhancedNum = 4;%USB端口号
-loadCfg = 1;%上电后或者改变波形参数后第一次采集数据置为1
+loadCfg = 0;%上电后或者改变波形参数后第一次采集数据置为 true
 
 %%  获取的数据存储在adcData中
 tic;
-[adcData,numAdcSamples,sampleRate,freqSlopeConst,numChirps] = ...
-    GetRawData(cfgFileName,comportStandardNum,comportEnhancedNum,loadCfg);
+if loadCfg
+    [numAdcSamples,sampleRate,freqSlopeConst,numChirps,cliCfg] = ...
+        InitRadar(cfgFileName,comportStandardNum,comportEnhancedNum);
+end
+adcData = GetRawData(comportStandardNum,comportEnhancedNum,numChirps,numAdcSamples);
 toc;
 % rx1~4 表示四根接收天线的接收信号
 % rx1为一个矩阵，每一列表示一帧chirp回波，列数代表帧数
@@ -16,7 +19,7 @@ rx1 = adcData(1,:);
 rx2 = adcData(2,:);
 rx3 = adcData(3,:);
 rx4 = adcData(4,:);
-disp('Finish!!!');
+% disp('Finish!!!');
 
 %% 基本信号处理例程
 rx1 = reshape(adcData(1,:),numAdcSamples,[]);
