@@ -36,17 +36,12 @@ function [numAdcSamples,sampleRate,freqSlopeConst,numChirps,cliCfg] = ...
                 freqSlopeConst = str2double(cliCmd_split{1,9});
                 numAdcSamples = str2double(cliCmd_split{1,11});
                 if(numAdcSamples>1024)
-                    disp('ÂèÇÊï∞ÊúâÈóÆÈ¢òÔºåËØ∑Èôç‰ΩéË∑ùÁ¶ªÂàÜËæ®ÁéáÊàñÂáèÂ∞èÊúÄÂ§ß‰∏çÊ®°Á≥äË∑ùÁ¶ªÔºÅ');
+                    disp('≤Œ ˝”–Œ Ã‚£¨«ÎΩµµÕæ‡¿Î∑÷±Ê¬ ªÚºı–°◊Ó¥Û≤ªƒ£∫˝æ‡¿Î£°');
                     return
                 end
-                numAdcSamples_t = power(2,ceil(log2(numAdcSamples)));
-                numSamples_perRx_perChirp = numAdcSamples_t * 2 * 2;
             end
         end
     end
-
-    % Configure data UART port
-    sphandle = configureSport(comportDataNum);
 
     % Send Configuration Parameters to Board
     % Open CLI port
@@ -57,7 +52,7 @@ function [numAdcSamples,sampleRate,freqSlopeConst,numChirps,cliCfg] = ...
     set(spCliHandle,'Timeout',1);
 
     tStart = tic;
-
+    fprintf(spCliHandle,'sensorStop');
     while true
         fprintf(spCliHandle, ''); 
         temp=fread(spCliHandle,100);
@@ -78,29 +73,12 @@ function [numAdcSamples,sampleRate,freqSlopeConst,numChirps,cliCfg] = ...
         fprintf(spCliHandle,cliCmd);
         fprintf('>%s\n',cliCmd);
         radarReply = fscanf(spCliHandle);
-        disp(radarReply(1:4));
+        if any(radarReply(1:4)~='Done')
+            disp(radarReply);
+        end
         pause(0.05);
     end
     disp('Init done!');
-
-    function [sphandle] = configureSport(comportSnum)
-        % global numSamples_perRx_perChirp;
-        % ÈáäÊîæË¢´Âç†Áî®ÁöÑ‰∏≤Âè£
-        if ~isempty(instrfind('Type','serial'))
-            disp('Serial port(s) already open. Re-initializing...');
-            fclose(instrfind('Type','serial'));
-            delete(instrfind('Type','serial'));  % delete open serial ports.
-        end
-        comportnum_str=['COM' num2str(comportSnum)];
-        sphandle = serial(comportnum_str,'BaudRate',921600);
-        set(sphandle,'InputBufferSize',numSamples_perRx_perChirp);
-        set(sphandle,'Timeout',10);
-        set(sphandle,'ErrorFcn',@dispError);
-        set(sphandle,'BytesAvailableFcnMode','byte');
-        set(sphandle,'BytesAvailableFcnCount',numSamples_perRx_perChirp);
-        set(sphandle,'BytesAvailableFcn',@readData);
-        fopen(sphandle);
-    end
 
     function [sphandle] = configureCliPort(comportPnum)
     %     if ~isempty(instrfind('Type','serial'))
@@ -119,14 +97,4 @@ function [numAdcSamples,sampleRate,freqSlopeConst,numChirps,cliCfg] = ...
         disp('Serial port error!');
     end
 
-    function [] = readData(obj,event) %#ok<*INUSD>
-        % global bytevec;
-        % global numSamples_perRx_perChirp;
-        % global readBufferTime;
-        % global readDataFlag;
-        [tempvec,~] = fread(obj,numSamples_perRx_perChirp,'uint8');
-        bytevec = [bytevec,tempvec];
-        readBufferTime = tic;
-        readDataFlag = 1;
-    end
 end
