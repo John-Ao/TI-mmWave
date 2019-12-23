@@ -50,6 +50,12 @@ function PointCloud()
     ONE_QFORMAT=2^xyzOutputQFormat*16;
 
     % Send Configuration Parameters to Board
+    % 释放串口
+    port=instrfind('Type','serial');
+    if ~isempty(port)
+        fclose(port);
+        delete(port);  % delete open serial ports.
+    end
     % Open CLI port
     spCliHandle = configureCliPort(comportUserNum);
 
@@ -89,6 +95,15 @@ function PointCloud()
     figure;
     buffer_size=256;
     data=[];
+
+    xmin=-0.9;
+    xmax=0.9;
+    ymax=0.9;
+    ymin=0.1;
+    last_p=[0;0];
+    thres=0.2;
+    gap=0;
+    gap_thres=30;
 
     disp('Init done!');
 
@@ -130,18 +145,17 @@ function PointCloud()
     end
 
     while true
-        try
-            pause(0.01);
-        catch
-            fprintf(spCliHandle,'sensorStop');
-            % 释放串口
-            port=instrfind('Type','serial');
-            if ~isempty(port)
-                fclose(port);
-                delete(port);  % delete open serial ports.
-            end
-            return;
+        if input('')==1
+            break;
         end
+    end
+
+    fprintf(spCliHandle,'sensorStop');
+    % 释放串口
+    port=instrfind('Type','serial');
+    if ~isempty(port)
+        fclose(port);
+        delete(port);  % delete open serial ports.
     end
 
     function [] = readData(obj,event) %#ok<*INUSD>
@@ -179,11 +193,29 @@ function PointCloud()
             ps=double(typecast(tmp(pos+(0:points*12-1)),'int16'));
             xs=ps(4:6:end)./ONE_QFORMAT;
             ys=ps(5:6:end)./ONE_QFORMAT;
-            plot(xs,ys,'o');
+            mdis=inf;
+            mp=[];
+            for l=1:points
+                if xs(l)<xmax&&xs(l)>xmin&&ys(l)<ymax&&ys(l)>ymin
+                    p=[xs(l);ys(l)];
+                    dis=norm(p-last_p);
+                    if dis<mdis
+                        mdis=dis;
+                        mp=p;
+                    end
+                end
+            end
+            gap=gap+1;
+            if ~isempty(mp)&&(mdis<thres||gap>gap_thres)
+                gap=0;
+                last_p=mp;
+            end                        
+            % plot(xs,ys,'o');
+            plot(last_p(1),last_p(2),'rx');
             xlim([-2,2]);
             ylim([0,1.2]);
-            disp([num2str(frame),':',num2str(points)]);
-            pause(0.01);
+            % disp([num2str(frame),':',num2str(points)]);
+            % pause(0.01);
             pos=pos+12*points;
         end
     end
