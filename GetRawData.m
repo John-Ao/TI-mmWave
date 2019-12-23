@@ -21,7 +21,7 @@ function adcData = GetRawData(comportUserNum,comportDataNum,numChirps,numAdcSamp
     readDataFlag = 0;
 
     % Configure data UART port
-    sphandle = configureSport(comportDataNum);
+    configureSport(comportDataNum);
 
     % Send Configuration Parameters to Board
     % Open CLI port
