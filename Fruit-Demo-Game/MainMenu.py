@@ -107,7 +107,8 @@ def shorten(Num):
     return Num
 
 def HomeScreen(score=0):
-    game_run = True
+    global game_run
+    game_run=True
     Buttons = [Button(275,600,200,100,"    Play"),Button(525,600,200,100,"Change Color")]
     CcButtons = [Button(750,650,200,100,"Exit"),Button(150,250,50,50,""),Button(800,250,50,50,"")]
     screen = "Main"
@@ -116,7 +117,7 @@ def HomeScreen(score=0):
     ColorSelection = 0
     Images = load_images("Images")
     
-    while game_run == True:
+    while game_run:
 
         gameDisplay.fill((0,162,232))
         #gameDisplay.blit(pygame.transform.scale(Images["Bg"],(DisplayWidth,DisplayHeight)),(0,0))
@@ -127,28 +128,31 @@ def HomeScreen(score=0):
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                game_run=False
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if screen == "Main":
-                    for i, button in enumerate(Buttons):
-                        if button.x <= pos[0] <= button.x + button.width and button.y <= pos[1] <= button.y + button.height:
-                            if i == 0:
-                                main.game_loop([Colors[ColorSelection],SubColors[ColorSelection]])
-                            if i == 1:
-                                screen = "Change Color"
-                if screen == "Change Color":
-                    for i, button in enumerate(CcButtons):
-                        if button.x <= pos[0] <= button.x + button.width and button.y <= pos[1] <= button.y + button.height:
-                            if i == 0:
-                                screen = "Main"
-                            if i == 1:
-                                ColorSelection += 1
-                                ColorSelection %= (len(Colors))
-                            if i == 2:
-                                ColorSelection -= 1
-                                if ColorSelection < 0:
-                                    ColorSelection = len(Colors)-1
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                main.game_loop([Colors[ColorSelection],SubColors[ColorSelection]])
+            # if event.type == pygame.MOUSEBUTTONDOWN:
+            #     if screen == "Main":
+            #         for i, button in enumerate(Buttons):
+            #             if button.x <= pos[0] <= button.x + button.width and button.y <= pos[1] <= button.y + button.height:
+            #                 if i == 0:
+            #                     main.game_loop([Colors[ColorSelection],SubColors[ColorSelection]])
+            #                 if i == 1:
+            #                     screen = "Change Color"
+            #     if screen == "Change Color":
+            #         for i, button in enumerate(CcButtons):
+            #             if button.x <= pos[0] <= button.x + button.width and button.y <= pos[1] <= button.y + button.height:
+            #                 if i == 0:
+            #                     screen = "Main"
+            #                 if i == 1:
+            #                     ColorSelection += 1
+            #                     ColorSelection %= (len(Colors))
+            #                 if i == 2:
+            #                     ColorSelection -= 1
+            #                     if ColorSelection < 0:
+            #                         ColorSelection = len(Colors)-1
                                 
 
         if screen == "Main":

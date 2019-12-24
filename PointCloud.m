@@ -104,6 +104,7 @@ function PointCloud()
     thres=0.2;
     gap=0;
     gap_thres=30;
+    pos_checked=false;
 
     disp('Init done!');
 
@@ -165,17 +166,20 @@ function PointCloud()
         pos=1;
         while true
             % find the magic word
-            while true
-                while tmp(pos)~=0x02
-                    pos=pos+1;
-                    if pos+7>bsize
-                        return;
+            if ~pos_checked
+                while true
+                    while tmp(pos)~=0x02
+                        pos=pos+1;
+                        if pos+7>bsize
+                            return;
+                        end
+                    end
+                    if tmp(pos+1)==0x01&&tmp(pos+2)==0x04&&tmp(pos+3)==0x03&& ...
+                        tmp(pos+4)==0x06&&tmp(pos+5)==0x05&&tmp(pos+6)==0x08&&tmp(pos+7)==0x07
+                        break;
                     end
                 end
-                if tmp(pos+1)==0x01&&tmp(pos+2)==0x04&&tmp(pos+3)==0x03&& ...
-                    tmp(pos+4)==0x06&&tmp(pos+5)==0x05&&tmp(pos+6)==0x08&&tmp(pos+7)==0x07
-                    break;
-                end
+                pos_checked=true;
             end
             len=double(typecast(tmp(pos+(12:15)),'int32'));
             if pos+len+7>bsize % if the data left is not enough, wait for the next time
@@ -186,11 +190,11 @@ function PointCloud()
             if typecast(tmp(pos+len+(0:7)),'uint64')~=0x708050603040102
                 disp(['Corrupt frame: ',num2str(frame)])
                 data=tmp(pos+8:end);
+                pos_checked=false;
                 return;
             end
             points=double(typecast(tmp(pos+(28:29)),'uint16'));
-            pos=pos+52;
-            ps=double(typecast(tmp(pos+(0:points*12-1)),'int16'));
+            ps=double(typecast(tmp(pos+52+(0:points*12-1)),'int16'));
             xs=ps(4:6:end)./ONE_QFORMAT;
             ys=ps(5:6:end)./ONE_QFORMAT;
             mdis=inf;
@@ -216,7 +220,7 @@ function PointCloud()
             ylim([0,1.2]);
             % disp([num2str(frame),':',num2str(points)]);
             % pause(0.01);
-            pos=pos+12*points;
+            pos=pos+len;
         end
     end
 
