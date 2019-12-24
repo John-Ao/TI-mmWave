@@ -2,7 +2,6 @@ from math import ceil, log2
 from time import sleep
 import numpy as np
 import serial
-import matplotlib.pyplot as plt
 import cv2
 
 
