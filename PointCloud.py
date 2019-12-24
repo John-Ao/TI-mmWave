@@ -105,7 +105,9 @@ with serial.Serial(port=comportUser, baudrate=115200) as ser_cmd:
     ymax = 0.9
     ymin = 0.1
     last_p = [0, 0]
-    thres = 0.2**2
+    last_pp = [0, 0]
+    momentum = 0.6
+    thres = 0.4**2
     gap = 0
     gap_thres = 30
     pos_checked = False
@@ -167,16 +169,20 @@ with serial.Serial(port=comportUser, baudrate=115200) as ser_cmd:
                 gap = gap+1
                 if len(mp) > 0 and (mdis < thres or gap > gap_thres):
                     gap = 0
-                    last_p = mp
+                    last_p = [-mp[0], mp[1]]  # flip over y axis
                 # plot(xs,ys,'o')
                 # plt.plot(last_p[0],last_p[1],'rx')
                 # plt.xlim([-2,2])
                 # plt.ylim([0,1.2])
                 # plt.pause(0.01)
+                last_pp = [last_pp[0]*momentum+last_p[0] *
+                           (1-momentum), last_pp[1]*momentum+last_p[1]*(1-momentum)]
                 plot[:] = 0
-                x, y = int((1-last_p[1])*plot_h) - \
-                    1, int((last_p[0]+1)/2*plot_w)-1
-                plot[x-3:x+3, y-3:y+3, :] = 255
+                # x, y = int((1-last_pp[1])*plot_h) - 1, \
+                #        int((last_pp[0]+1)/2*plot_w) - 1
+                x=int((np.clip(last_pp[0],-0.15,0.15)/0.15+1)/2*plot_w)
+                y=int((1-np.clip(last_pp[1],0.3,0.6)/0.3)*plot_h)
+                plot[y-3:y+3, x-3:x+3, :] = 255
                 cv2.imshow('Figure', plot)
                 cv2.waitKey(20)
                 print(frame, last_p)
