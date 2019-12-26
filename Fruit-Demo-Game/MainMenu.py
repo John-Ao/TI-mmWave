@@ -130,7 +130,7 @@ def HomeScreen(score=0):
             if event.type == pygame.QUIT:
                 game_run=False
                 pygame.quit()
-                sys.exit()
+                os.kill()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 main.game_loop([Colors[ColorSelection],SubColors[ColorSelection]])
             # if event.type == pygame.MOUSEBUTTONDOWN:

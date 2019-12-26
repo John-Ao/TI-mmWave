@@ -41,11 +41,19 @@ font_35 = pygame.freetype.Font("Font.ttf", 35)
 
 radar_pos=(500,500)
 game_run=True
+last_radar_pos=radar_pos
 def get_radar():
     global radar_pos
     return radar_pos
 
+def get_radar_rel():
+    global radar_pos,last_radar_pos
+    rel=(radar_pos[0]-last_radar_pos[0],radar_pos[1]-last_radar_pos[1])
+    last_radar_pos=radar_pos
+    return rel
+
 pygame.mouse.get_pos=get_radar
+pygame.mouse.get_rel=get_radar_rel
 
 #Loading the images
 def load_images(path_to_directory):
@@ -225,7 +233,7 @@ def game_loop(Colors=[(0,255,0),(0,150,0)]):
             if event.type == pygame.QUIT:
                 game_run=False
                 pygame.quit()
-                sys.exit()
+                os.kill()
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 flag=True
         if flag:
@@ -512,7 +520,10 @@ def PointCloud():
                     plot[:] = 0
                     x = int((np.clip(last_pp[0], -0.15, 0.15)/0.15+1)/2*DisplayWidth)
                     y = int((2-np.clip(last_pp[1], 0.3, 0.6)/0.3)*DisplayHeight)
-                    radar_pos=(x,y)
+                    radar_pos_=(x,y)
+                    xx,yy=radar_pos
+                    if (xx-x)**2+(yy-y)**2>0.006:
+                        radar_pos=(x,y)
                     # print(frame, radar_pos)
                     # print([num2str(frame),':',num2str(points)])
                     # sleep(0.01)
@@ -524,5 +535,7 @@ def PointCloud():
 
 
 if __name__ == "__main__":
-    threading.Thread(target=PointCloud).start()
+    radar=threading.Thread(target=PointCloud)
+    radar.deamon=True
+    radar.start()
     MainMenu.HomeScreen()
