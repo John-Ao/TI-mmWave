@@ -1,6 +1,11 @@
+cfgFileName = 'profile01.cfg'
+comportUser = 'COM3'  # standard, for commands
+comportData = 'COM4'  # enhanced, for data
+
+
 #Importing all the modules
 try:
-    import time, random, sys, os, math, threading
+    import time, random, sys, os, math, threading, signal
     from math import ceil, log2
     from time import sleep
     import numpy as np
@@ -19,20 +24,14 @@ except ImportError:
     print("Make sure you have all the extra files")
 from pygame import freetype
 
-
-#game_font = pygame.freetype.Font("Font.ttf", 75)
-#text_surface, rect = game_font.render(("Programmer: 8BitToaster"), (0, 0, 0))
-#gameDisplay.blit(text_surface, (150, 300))
-
 # Initialize the game engine
 pygame.init()
-
 
 DisplayWidth,DisplayHeight = 1000, 800
 clock = pygame.time.Clock()
 
 gameDisplay = pygame.display.set_mode((DisplayWidth,DisplayHeight))
-pygame.display.set_caption("Fruit Demo Game - Ao")
+pygame.display.set_caption("水果忍者")
 font_100 = pygame.freetype.Font("Font.ttf", 100)
 font_50 = pygame.freetype.Font("Font.ttf", 50)
 font_75 = pygame.freetype.Font("Font.ttf", 75) 
@@ -386,12 +385,9 @@ class Buffer():
 
 
 def PointCloud():
+    '''此部分的代码说明详见PointCloud.py'''
     global radar_pos, game_run
     write_to_board = True  # set to true if it's the first time to run
-    cfgFileName = 'profile01.cfg'
-    comportUser = 'COM3'  # standard, for commands
-    comportData = 'COM4'  # enhanced, for data
-    time.sleep(10)
     # open config file
 
     with open(cfgFileName, 'r') as cfgFile:
@@ -528,6 +524,7 @@ def PointCloud():
 
 
 if __name__ == "__main__":
+    # start radar processing in another thread
     radar=threading.Thread(target=PointCloud)
     radar.deamon=True
     radar.start()

@@ -15,11 +15,6 @@ except ImportError:
     print("Make sure you have all the extra files")
 from pygame import freetype
 
-
-#game_font = pygame.freetype.Font("Font.ttf", 75)
-#text_surface, rect = game_font.render(("Programmer: 8BitToaster"), (0, 0, 0))
-#gameDisplay.blit(text_surface, (150, 300))
-
 # Initialize the game engine
 pygame.init()
 
@@ -36,7 +31,6 @@ SizeCheck = pygame.font.Font("Font.ttf", 50)
 SizeCheck_75 = pygame.font.Font("Font.ttf", 75)
 font_35 = pygame.freetype.Font("Font.ttf", 35)
 first_run=True
-
 
 #Loading the images
 def load_images(path_to_directory):
@@ -132,7 +126,6 @@ def HomeScreen(score=0):
 
         pygame.display.flip()
         clock.tick(60)
-
 
 
 if __name__ == "__main__":
