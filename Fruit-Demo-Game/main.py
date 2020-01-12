@@ -15,7 +15,6 @@ except ImportError:
     sys.exit()
 try:
     import MainMenu
-    from PointCloud_fn import PointCloud
 except ImportError:
     print("Make sure you have all the extra files")
 from pygame import freetype
@@ -39,7 +38,7 @@ font_50 = pygame.freetype.Font("Font.ttf", 50)
 font_75 = pygame.freetype.Font("Font.ttf", 75) 
 font_35 = pygame.freetype.Font("Font.ttf", 35)
 
-radar_pos=(500,500)
+radar_pos=(-1,-1)
 game_run=True
 last_radar_pos=radar_pos
 def get_radar():
@@ -233,8 +232,8 @@ def game_loop(Colors=[(0,255,0),(0,150,0)]):
             if event.type == pygame.QUIT:
                 game_run=False
                 pygame.quit()
-                os.kill()
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                sys.exit()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 flag=True
         if flag:
             MainMenu.HomeScreen(mscore)
@@ -392,7 +391,7 @@ def PointCloud():
     cfgFileName = 'profile01.cfg'
     comportUser = 'COM3'  # standard, for commands
     comportData = 'COM4'  # enhanced, for data
-
+    time.sleep(10)
     # open config file
 
     with open(cfgFileName, 'r') as cfgFile:
@@ -447,14 +446,11 @@ def PointCloud():
         xmax = 0.9
         ymax = 0.9
         ymin = 0.1
-        last_p = [0, 0]
-        last_pp = [0, 0]
+        last_p = last_p_ = last_pp = [0, 0]
         momentum = 0.6
         thres = 0.4**2
         gap = 0
         gap_thres = 30
-        plot_w, plot_h = 1024, 512
-        plot = np.zeros((plot_h, plot_w, 3), np.uint8)
 
         print('Init done!')
 
@@ -471,7 +467,8 @@ def PointCloud():
             data_buf = Buffer(ser_data)
             checked = False
             try:
-                while game_run:
+                while True:
+                    assert game_run
                     # find the magic word
                     if ~checked:
                         mp = 0
@@ -495,7 +492,7 @@ def PointCloud():
                     data = data[36:-8]
                     data = [b2n(i, signed=True) /
                             ONE_QFORMAT for i in zip(data[::2], data[1::2])]
-                    xs = data[3::6]
+                    xs = [-x for x in data[3::6]]  # flip over y axis
                     ys = data[4::6]
                     mdis = 1e8
                     mp = []
@@ -509,17 +506,13 @@ def PointCloud():
                     gap = gap+1
                     if len(mp) > 0 and (mdis < thres or gap > gap_thres):
                         gap = 0
-                        last_p = [-mp[0], mp[1]]  # flip over y axis
-                    # plot(xs,ys,'o')
-                    # plt.plot(last_p[0],last_p[1],'rx')
-                    # plt.xlim([-2,2])
-                    # plt.ylim([0,1.2])
-                    # plt.pause(0.01)
+                        last_p_ = mp
+                        if (last_p[0]-last_p_[0])**2+(last_p[1]-last_p_[1])**2>0.0008: #0.0001373291015625
+                            last_p=last_p_
                     last_pp = [last_pp[0]*momentum+last_p[0] *
-                               (1-momentum), last_pp[1]*momentum+last_p[1]*(1-momentum)]
-                    plot[:] = 0
-                    x = int((np.clip(last_pp[0], -0.15, 0.15)/0.15+1)/2*DisplayWidth)
-                    y = int((2-np.clip(last_pp[1], 0.3, 0.6)/0.3)*DisplayHeight)
+                            (1-momentum), last_pp[1]*momentum+last_p[1]*(1-momentum)]
+                    x=int((np.clip(last_pp[0],-0.18,0.18)/0.18+1)/2*DisplayWidth)
+                    y=int((1-np.clip(last_pp[1]-0.2,0.0,0.5)/0.5)*DisplayHeight)
                     radar_pos_=(x,y)
                     xx,yy=radar_pos
                     if (xx-x)**2+(yy-y)**2>0.006:
@@ -529,7 +522,7 @@ def PointCloud():
                     # sleep(0.01)
                 ser_cmd.write(b'sensorStop\n')
                 print('Sensor Stopped')
-            except KeyboardInterrupt:
+            except Exception:
                 ser_cmd.write(b'sensorStop\n')
                 print('Sensor Stopped')
 

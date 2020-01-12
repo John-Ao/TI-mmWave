@@ -103,8 +103,7 @@ with serial.Serial(port=comportUser, baudrate=115200) as ser_cmd:
     xmax = 0.9
     ymax = 0.9
     ymin = 0.1
-    last_p = [0, 0]
-    last_pp = [0, 0]
+    last_p = last_p_ = last_pp = [0, 0]
     momentum = 0.6
     thres = 0.4**2
     gap = 0
@@ -154,33 +153,42 @@ with serial.Serial(port=comportUser, baudrate=115200) as ser_cmd:
                 data = data[36:-8]
                 data = [b2n(i, signed=True) /
                         ONE_QFORMAT for i in zip(data[::2], data[1::2])]
-                xs = data[3::6]
+                xs = [-x for x in data[3::6]]  # flip over y axis
                 ys = data[4::6]
                 mdis = 1e8
                 mp = []
+                plot[:] = plot[:]*0.95
                 for x, y in zip(xs, ys):
                     if xmin < x < xmax and ymin < y < ymax:
                         p = [x, y]
                         dis = (x-last_p[0])**2+(y-last_p[1])**2
+                        x=int((np.clip(x,-0.18,0.18)/0.18+1)/2*plot_w)
+                        y=int((1-np.clip(y-0.2,0.0,0.5)/0.5)*plot_h)
+                        # plot[y-3:y+3, x-3:x+3, 0] = 255
                         if dis < mdis:
                             mdis = dis
                             mp = p
                 gap = gap+1
                 if len(mp) > 0 and (mdis < thres or gap > gap_thres):
                     gap = 0
-                    last_p = [-mp[0], mp[1]]  # flip over y axis
-                # plot(xs,ys,'o')
-                # plt.plot(last_p[0],last_p[1],'rx')
-                # plt.xlim([-2,2])
-                # plt.ylim([0,1.2])
-                # plt.pause(0.01)
-                last_pp = [last_pp[0]*momentum+last_p[0] *
-                           (1-momentum), last_pp[1]*momentum+last_p[1]*(1-momentum)]
-                plot[:] = 0
+                    # print(mdis)
+                    last_p_ = mp
+                    x,y=last_p_
+                    x=int((np.clip(x,-0.18,0.18)/0.18+1)/2*plot_w)
+                    y=int((1-np.clip(y-0.2,0.0,0.5)/0.5)*plot_h)
+                    # plot[y-3:y+3, x-3:x+3, 1] = 255
+                    if (last_p[0]-last_p_[0])**2+(last_p[1]-last_p_[1])**2>0.0008: #0.0001373291015625
+                        print((last_p[0]-last_p_[0])**2+(last_p[1]-last_p_[1])**2)
+                        last_p=last_p_
+                last_pp=last_p
+                # last_pp = [last_pp[0]*momentum+last_p[0] *
+                #            (1-momentum), last_pp[1]*momentum+last_p[1]*(1-momentum)]
                 # x, y = int((1-last_pp[1])*plot_h) - 1, \
                 #        int((last_pp[0]+1)/2*plot_w) - 1
-                x=int((np.clip(last_pp[0],-0.15,0.15)/0.15+1)/2*plot_w)
-                y=int((1-np.clip(last_pp[1],0.3,0.6)/0.3)*plot_h)
+                # x=int((np.clip(last_pp[0],-0.15,0.15)/0.15+1)/2*plot_w)
+                # y=int((1-np.clip(last_pp[1],0.3,0.6)/0.3)*plot_h)
+                x=int((np.clip(last_pp[0],-0.18,0.18)/0.18+1)/2*plot_w)
+                y=int((1-np.clip(last_pp[1]-0.2,0.0,0.5)/0.5)*plot_h)
                 plot[y-3:y+3, x-3:x+3, :] = 255
                 cv2.imshow('Figure', plot)
                 cv2.waitKey(20)
